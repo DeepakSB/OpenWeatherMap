@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -31,14 +33,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.jpmorgan.openweathermap.R
-import com.example.jpmorgan.openweathermap.api.model.City
+import com.example.jpmorgan.openweathermap.api.data.DefaultAppContainer
+import com.example.jpmorgan.openweathermap.api.model.CityWeather
+import com.example.jpmorgan.openweathermap.ui.utils.Utils
+import com.example.jpmorgan.openweathermap.viewmodel.WeatherServiceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpenWeatherScreen(
-    navController: NavController
-
+    navController: NavController,
 ) {
+    val appContainer = DefaultAppContainer()
+    val viewModel = WeatherServiceViewModel(appContainer.weatherServiceRepository)
 
     val cityName : MutableState<String> = remember {
         mutableStateOf("")
@@ -81,15 +87,17 @@ fun OpenWeatherScreen(
             TextField(modifier = Modifier
                 .fillMaxWidth(),
                 readOnly = false,
-                value = "",
+                value = cityName.value,
                 singleLine = true,
                 label = {Text (stringResource(id = R.string.enter_city_name))},
                 onValueChange = {
-
+                    cityName.value = it
                 },
                 trailingIcon = {
                     IconButton(onClick = {
-
+                        if(cityName.value.isNotEmpty()) {
+                            viewModel.getCityWeather(cityName.value)
+                        }
                     }) {
                         Icon(
                             Icons.Default.Search,
@@ -103,7 +111,7 @@ fun OpenWeatherScreen(
 }
 
 @Composable
-fun weatherServiceListScreen(cityList: List<City>,
+fun WeatherServiceListScreen(cityWeatherList: List<CityWeather>,
                              modifier: Modifier = Modifier,
                              contentPadding: PaddingValues = PaddingValues(0.dp)) {
     LazyColumn(modifier = modifier,
@@ -111,12 +119,12 @@ fun weatherServiceListScreen(cityList: List<City>,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         items(
-            count = cityList.size,
+            count = cityWeatherList.size,
             key = {
-                cityList[it].id
+                cityWeatherList[it].id
             },
             itemContent = {
-                CityCard(it, cityList)
+                CityCard(it, cityWeatherList)
             }
         )
     }
@@ -124,14 +132,36 @@ fun weatherServiceListScreen(cityList: List<City>,
 
 @Composable
 fun CityCard (i: Int,
-              cityList: List<City>) {
+              cityWeatherList: List<CityWeather>) {
     Card(
         modifier = Modifier
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = cityList[i].name
+                text = cityWeatherList[i].name
             )
         }
+    }
+}
+
+@Composable
+fun WeatherScreen(cityWeather: CityWeather) {
+    Column(
+        modifier = Modifier.padding(top = 150.dp, bottom = 20.dp, start = 20.dp,
+                                    end = 20.dp)
+    ) {
+        Text(
+            text = cityWeather.name
+        )
+        Spacer(modifier = Modifier.height(7.dp))
+        Text(
+            text = stringResource(id = R.string.temperature_celsius,
+            Utils.tempKelvinToCelsius(cityWeather.main.temp))
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = stringResource(id = R.string.humidity,
+                cityWeather.main.humidity)
+        )
     }
 }
