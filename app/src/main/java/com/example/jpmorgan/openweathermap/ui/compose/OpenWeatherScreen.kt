@@ -24,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,6 +36,7 @@ import androidx.navigation.NavController
 import com.example.jpmorgan.openweathermap.R
 import com.example.jpmorgan.openweathermap.api.data.DefaultAppContainer
 import com.example.jpmorgan.openweathermap.api.model.CityWeather
+import com.example.jpmorgan.openweathermap.api.model.WeatherServiceData
 import com.example.jpmorgan.openweathermap.ui.utils.Utils
 import com.example.jpmorgan.openweathermap.viewmodel.WeatherServiceViewModel
 
@@ -45,6 +47,9 @@ fun OpenWeatherScreen(
 ) {
     val appContainer = DefaultAppContainer()
     val viewModel = WeatherServiceViewModel(appContainer.weatherServiceRepository)
+    val cityWeatherServiceData = viewModel.cityWeatherServiceData.collectAsState()
+    val displayWeatherScreen = viewModel.weatherScreenUpdate.collectAsState()
+    val weatherError = viewModel.weatherError.collectAsState()
 
     val cityName : MutableState<String> = remember {
         mutableStateOf("")
@@ -75,38 +80,43 @@ fun OpenWeatherScreen(
                 })
         },
         ) {
-        it
-    }
-
-    Box {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 60.dp)
-        ) {
-            TextField(modifier = Modifier
-                .fillMaxWidth(),
-                readOnly = false,
-                value = cityName.value,
-                singleLine = true,
-                label = {Text (stringResource(id = R.string.enter_city_name))},
-                onValueChange = {
-                    cityName.value = it
-                },
-                trailingIcon = {
-                    IconButton(onClick = {
-                        if(cityName.value.isNotEmpty()) {
-                            viewModel.getCityWeather(cityName.value)
+        it -> Box {Modifier
+            .padding(it)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 60.dp)
+                ) {
+                    TextField(modifier = Modifier
+                        .fillMaxWidth(),
+                        readOnly = false,
+                        value = cityName.value,
+                        singleLine = true,
+                        label = {Text (stringResource(id = R.string.enter_city_name))},
+                        onValueChange = {
+                            cityName.value = it
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                if (cityName.value.isNotEmpty()) {
+                                    viewModel.getCityWeather(cityName.value)
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = ""
+                                )
+                            }
                         }
-                    }) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = ""
-                        )
-                    }
+                    )
                 }
-            )
-        }
+                if (displayWeatherScreen.value) {
+                    WeatherScreen(cityWeather = cityWeatherServiceData.value)
+                }
+                if (weatherError.value) {
+                    WeatherError()
+                }
+            }
     }
 }
 
@@ -145,23 +155,50 @@ fun CityCard (i: Int,
 }
 
 @Composable
-fun WeatherScreen(cityWeather: CityWeather) {
+fun WeatherScreen(cityWeather: WeatherServiceData) {
     Column(
         modifier = Modifier.padding(top = 150.dp, bottom = 20.dp, start = 20.dp,
                                     end = 20.dp)
     ) {
         Text(
-            text = cityWeather.name
+            text = cityWeather.cityName
         )
         Spacer(modifier = Modifier.height(7.dp))
         Text(
             text = stringResource(id = R.string.temperature_celsius,
-            Utils.tempKelvinToCelsius(cityWeather.main.temp))
+            Utils.tempKelvinToCelsius(cityWeather.temp))
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = stringResource(id = R.string.weather_description,
+                cityWeather.description)
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = stringResource(id = R.string.humidity,
-                cityWeather.main.humidity)
+                cityWeather.humidity)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = stringResource(id = R.string.visibility,
+                cityWeather.visibility)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = stringResource(id = R.string.wind_speed,
+                cityWeather.windSpeed)
+        )
+    }
+}
+
+@Composable
+fun WeatherError() {
+    Column(
+        modifier = Modifier.padding(top = 150.dp, bottom = 20.dp, start = 20.dp,
+            end = 20.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.weather_error)
         )
     }
 }

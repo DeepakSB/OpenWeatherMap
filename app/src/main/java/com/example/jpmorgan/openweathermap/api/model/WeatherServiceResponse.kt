@@ -8,10 +8,10 @@ data class WeatherServiceSearchResponse (val message: String,
 
 data class CityWeather(val id: Double, val name: String, val coord: Coordinates,
                        val main: WeatherParameters, val dt: Double,
-                       val wind: Wind, val sys: Country, val rain: String,
+                       val visibility: Double, val wind: Wind, val sys: Country, val rain: String,
                        val snow: String, val clouds: Clouds, val weather: List<Weather>,
-                       val cod: Int, val timezone: Double, val message: String)
-
+                       val cod: Int, val timezone: Double,
+                       val message: String)
 data class Coordinates(val lat: Double, val lon: Double)
 
 data class WeatherParameters(val temp: Double, val pressure: Double,

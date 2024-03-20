@@ -10,4 +10,5 @@ interface ApiService {
     @GET("data/2.5/weather")
     suspend fun getCityWeather(@Query("q") cityName: String,
                                @Query("APPID") appId : String = Constants.APP_ID) : CityWeather
+
 }
